@@ -79,6 +79,10 @@ const certifications = [
 
 const awards = [
   {
+    title: "1st Place - Data Science Fellowship",
+    details: "Digital Egypt Pioneers Initiative - Final Ceremony Presenter for AMIT (2025)"
+  },
+  {
     title: "2nd Place - ECPC University Round",
     details: "Competitive Programming Championship (2024)"
   },
@@ -123,7 +127,7 @@ function App() {
           setActiveSection(newSection)
           lastActiveSection = newSection
         }
-      }, 100) // 100ms debounce to prevent rapid changes
+      }, 50) // 50ms debounce for snappier response with snap scrolling
     }
 
     // Scroll listener for sticky navbar and active section tracking
@@ -135,25 +139,36 @@ function App() {
           if (heroSection) {
             const heroHeight = heroSection.offsetHeight
             const scrollY = window.scrollY
-            setShowStickyNav(scrollY > heroHeight - 100)
+            setShowStickyNav(scrollY > heroHeight * 0.7) // Show navbar when 70% through hero section
           }
 
-          // Improved active section detection
+          // Enhanced active section detection 
           const sections = document.querySelectorAll('section[id]')
-          const scrollPosition = window.scrollY + 200 // Fixed offset
+          const scrollPosition = window.scrollY + 100 // Offset for better detection
           let newActiveSection = 'about' // Default fallback
+          let closestDistance = Infinity
 
-          // Find the best matching section by checking from top to bottom
-          for (let i = 0; i < sections.length; i++) {
-            const section = sections[i]
+          // Find the section closest to the top of viewport
+          sections.forEach(section => {
             const sectionTop = section.offsetTop
             const sectionId = section.getAttribute('id')
-
-            // Check if we're in this section's range with generous buffer
-            const buffer = 100
-            if (scrollPosition >= sectionTop - buffer) {
+            const distance = Math.abs(scrollPosition - sectionTop)
+            
+            // If this section is closer to the current scroll position
+            if (distance < closestDistance) {
+              closestDistance = distance
               newActiveSection = sectionId
             }
+          })
+
+          // Special handling for very top and bottom of page
+          if (window.scrollY < 100) {
+            newActiveSection = 'about'
+          }
+          
+          const lastSection = sections[sections.length - 1]
+          if (lastSection && window.innerHeight + window.scrollY >= document.body.offsetHeight - 100) {
+            newActiveSection = lastSection.getAttribute('id')
           }
 
           updateActiveSection(newActiveSection)
@@ -180,17 +195,14 @@ function App() {
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId)
     if (element) {
-      const headerOffset = 80 // Better offset for visual spacing
-      const elementPosition = element.getBoundingClientRect().top
-      const offsetPosition = elementPosition + window.pageYOffset - headerOffset
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
+      // For snap scrolling, scroll to the exact element position
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+        inline: 'nearest'
       })
       
-      // Temporarily set active section for immediate visual feedback
-      // The scroll handler will take over once scrolling completes
+      // Set active section immediately for visual feedback
       setActiveSection(sectionId)
     }
   }
